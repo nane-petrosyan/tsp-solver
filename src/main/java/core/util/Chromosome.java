@@ -4,32 +4,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Chromosome {
-    private double fitness;
-    private List<Integer> value;
+    private float fitness;
+    private List<Integer> genotype;
 
     public Chromosome(Chromosome chromosome) {
         this.fitness = chromosome.getFitness();
-        this.value = new ArrayList<>(chromosome.getValue());
+        this.genotype = new ArrayList<>(chromosome.getGenotype());
     }
 
-    public Chromosome(double fitness, List<Integer> value) {
+    public Chromosome(float fitness, List<Integer> value) {
         this.fitness = fitness;
-        this.value = value;
+        this.genotype = value;
     }
 
-    public double getFitness() {
+    public float getFitness() {
         return fitness;
     }
 
-    public void setFitness(double fitness) {
+    public void setFitness(float fitness) {
         this.fitness = fitness;
     }
 
-    public List<Integer> getValue() {
-        return value;
+    public List<Integer> getGenotype() {
+        return genotype;
     }
 
-    public void setValue(List<Integer> value) {
-        this.value = value;
+    public void setGenotype(List<Integer> genotype) {
+        this.genotype = genotype;
     }
 }

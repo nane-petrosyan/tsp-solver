@@ -27,29 +27,16 @@ public class Solver {
 
         // create generation
         ScoreCalculator scoreCalculator = new ScoreCalculator(configuration.getDistanceMatrix());
-        List<Chromosome> population = scoreCalculator.createPopulation();
+
+        // main algorithm starts here
+        List<Chromosome> population = scoreCalculator.createInitialPopulation();
 
         // generate new chromosomes
         int MAX_ITERATIONS = configuration.getMaxIterations();
         for (int i = 0; i < MAX_ITERATIONS; i++) {
-            System.out.println("ITERATION : " + i);
             population = scoreCalculator.nextGeneration(population);
         }
         Chromosome bestSolution = scoreCalculator.bestInThePopulation(population);
-
-
-        // convert to solution type
-
-//        ParameterizedType destinationType = (ParameterizedType) tspDestinationsField.getGenericType();
-//        Class<?> destType = (Class<?>) destinationType.getActualTypeArguments()[0];
-//
-//        // TODO : catch exceptions / check cast
-
-//
-
-//        return new solutionType();
-
-//        Class<?> Dest = destinationType.getRawType().getClass();
 
         Field tspDestinationsField = getDestinationsField(configuration.getTsp());
         Collection<?> tspDestinationList = (Collection<?>) tspDestinationsField.get(configuration.getTsp());
@@ -58,8 +45,8 @@ public class Solver {
         List<Object> orderedList = new ArrayList<>();
 
         // TODO : convert population to solution type
-        for (int order = 0; order < bestSolution.getValue().size(); order++) {
-            orderedList.add(destinationList.get(bestSolution.getValue().get(order)));
+        for (int order = 0; order < bestSolution.getGenotype().size(); order++) {
+            orderedList.add(destinationList.get(bestSolution.getGenotype().get(order)));
         }
 
 
@@ -97,7 +84,6 @@ public class Solver {
                 }
 
                 // TODO : catch here
-//                destinations = (Collections) field.getGenericType();
                 destinations = field;
 
                 if (destinationAnnotationQuantity > 0) {

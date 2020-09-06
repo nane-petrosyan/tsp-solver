@@ -8,104 +8,58 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ScoreCalculator {
-    // 1. Create a random population
-    //        - randomOrder() to randomly create chromosomes
-    // 2. Calculate fitness probability for each chromosome
-    //        - calculateFitness() for the order
-    //        - normalizeFitness()
-    // 3. Next generation
-    //        - pick a chromosome (pool selection)
-    //        - mutate
-    //        - repeat
     // TODO : add crossover
+    // TODO : manipulate with mutation rate
+    // TODO : add constraints
+    // TODO : salesperson ?
+
+
+    private final int POPULATION_SIZE = 10;
+    private final List<List<Double>> distanceMatrix;
 
     public ScoreCalculator(List<List<Double>> distanceMatrix) {
         this.distanceMatrix = distanceMatrix;
     }
 
-
-    private final int POPULATION_SIZE = 10;
-    private List<List<Double>> distanceMatrix;
-
-
-    public List<Chromosome> createPopulation() {
-        List<Chromosome> population = new ArrayList<>();
+    public List<Chromosome> createInitialPopulation() {
+        List<Chromosome> initialPopulation = new ArrayList<>();
 
         List<Integer> initialOrder = IntStream.rangeClosed(0, distanceMatrix.size() - 1)
                 .boxed().collect(Collectors.toList());
 
         for (int i = 0; i < POPULATION_SIZE; i++) {
-            List<Integer> randomOrder = randomOrder(initialOrder);
-            population.add(new Chromosome(calculateFitness(randomOrder), randomOrder));
-        }
-        normalizeFitness(population);
+            List<Integer> shuffledOrder = randomOrder(initialOrder);
+            float fitness = calculateFitness(shuffledOrder);
 
-        return population;
-    }
-
-    public Chromosome bestInThePopulation(List<Chromosome> chromosomes) {
-        Chromosome best = chromosomes.get(0);
-        for (Chromosome ch : chromosomes) {
-            if (ch.getFitness() > best.getFitness()) {
-                best = ch;
-            }
+            initialPopulation.add(new Chromosome(fitness, shuffledOrder));
         }
 
-        System.out.println("BEST IN THE POPULATION : " + best.getFitness());
-        return best;
+        normalizeFitness(initialPopulation);
+
+        return initialPopulation;
     }
 
-
-    // TODO : maybe change this later for better performance
-    public List<Chromosome> nextGeneration(List<Chromosome> initialPopulation) {
-        // copy population
-        List<Chromosome> population = new ArrayList<>();
-        for (Chromosome chromosome : initialPopulation) {
-            population.add(new Chromosome(chromosome));
+    private void normalizeFitness(List<Chromosome> population) {
+        float fitnessSum = 0;
+        for (Chromosome chromosome : population) {
+            fitnessSum += chromosome.getFitness();
         }
 
-        List<Chromosome> newGen = new ArrayList<>();
+        for (Chromosome chromosome : population) {
+            chromosome.setFitness(chromosome.getFitness() / fitnessSum);
+        }
+    }
 
-        for (int i = 0; i < population.size(); i++) {
-            Chromosome chromosome = new Chromosome(pickAChromosome(population));
-            mutate(chromosome.getValue());
-            calculateFitness(chromosome.getValue());
-            newGen.add(chromosome);
+    private float calculateFitness(List<Integer> order) {
+        float fitness = 0.0f;
+
+        for (int i = 0; i < order.size() - 1; i++) {
+            fitness += getDistance(order.get(i), order.get(i + 1));
         }
 
-        normalizeFitness(newGen);
+        fitness = 1 / fitness;
 
-        // print fitness
-        for (Chromosome chromosome : newGen) {
-            System.out.println(chromosome.getFitness());
-        }
-
-        return newGen;
-    }
-
-    public void mutate(List<Integer> chromosome) {
-        Random randGenerator = new Random();
-        int index1 = randGenerator.nextInt(chromosome.size());
-        int index2 = randGenerator.nextInt(chromosome.size());
-
-        swap(chromosome, index1, index2);
-    }
-
-    public void swap(List<Integer> arr, int index1, int index2) {
-        Integer tmp = arr.get(index1);
-        arr.set(index1, arr.get(index2));
-        arr.set(index2, tmp);
-    }
-
-    public Chromosome pickAChromosome(List<Chromosome> population) {
-        int index = 0;
-        double random = new Random().nextDouble();
-
-        do {
-            random -= population.get(index++).getFitness();
-        } while (random > 0);
-
-        return population.get(--index);
+        return fitness;
     }
 
     public List<Integer> randomOrder(List<Integer> order) {
@@ -119,25 +73,55 @@ public class ScoreCalculator {
         return new ArrayList<>(list);
     }
 
-    public void normalizeFitness(List<Chromosome> population) {
-        double sum = 0.0;
-        for (Chromosome chromosome : population) {
-            sum += chromosome.getFitness();
-        }
+    public List<Chromosome> nextGeneration(List<Chromosome> population) {
+        List<Chromosome> nextGeneration = new ArrayList<>();
+        float fitness;
 
-        for (Chromosome chromosome : population) {
-            chromosome.setFitness(chromosome.getFitness() / sum);
+        for (int i = 0; i < POPULATION_SIZE; i++) {
+            Chromosome chromosome = new Chromosome(pickOneChromosome(population));
+            mutate(chromosome.getGenotype());
+            fitness = calculateFitness(chromosome.getGenotype());
+            chromosome.setFitness(fitness);
+            nextGeneration.add(chromosome);
         }
+        normalizeFitness(nextGeneration);
+
+        return nextGeneration;
     }
 
-    public double calculateFitness(List<Integer> sequence) {
-        double score = 0;
+    private void mutate(List<Integer> chromosomeValue) {
+        Random randGenerator = new Random();
+        int index1 = randGenerator.nextInt(chromosomeValue.size());
+        int index2 = randGenerator.nextInt(chromosomeValue.size());
 
-        for (int i = 0; i < sequence.size() - 1; i++) {
-            score += (getDistance(sequence.get(i), sequence.get(i + 1)));
+        swap(chromosomeValue, index1, index2);
+    }
+
+    public void swap(List<Integer> arr, int index1, int index2) {
+        Integer tmp = arr.get(index1);
+        arr.set(index1, arr.get(index2));
+        arr.set(index2, tmp);
+    }
+
+    private Chromosome pickOneChromosome(List<Chromosome> population) {
+        int index = 0;
+        float random = new Random().nextFloat();
+
+        while (random > 0) {
+            random -= population.get(index++).getFitness();
         }
 
-        return (double) (1 / (score));
+        return population.get(--index);
+    }
+
+    public Chromosome bestInThePopulation(List<Chromosome> chromosomes) {
+        Chromosome best = chromosomes.get(0);
+        for (Chromosome ch : chromosomes) {
+            if (ch.getFitness() > best.getFitness()) {
+                best = ch;
+            }
+        }
+        return best;
     }
 
     public double getDistance(int index1, int index2) {
@@ -146,6 +130,6 @@ public class ScoreCalculator {
                     "a salesperson and destinations.");
         }
 
-        return (Double) distanceMatrix.get(index1).get(index2);
+        return distanceMatrix.get(index1).get(index2);
     }
 }
