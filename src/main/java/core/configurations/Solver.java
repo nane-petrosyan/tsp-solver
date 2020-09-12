@@ -11,13 +11,16 @@ import java.util.List;
 
 public class Solver {
     private TSPConfiguration configuration;
+    private AlgorithmSetting algorithmSetting;
     private Class<?> solutionType;
 
     private Solver() {
     }
 
-    public Solver(TSPConfiguration configuration) {
+    // TODO : make this a builder
+    public Solver(TSPConfiguration configuration, AlgorithmSetting algorithmSetting) {
         this.configuration = configuration;
+        this.algorithmSetting = algorithmSetting;
         this.solutionType = configuration.getSolutionClass();
     }
 
@@ -26,13 +29,13 @@ public class Solver {
     public <solutionType> solutionType solve() throws IllegalAccessException, InstantiationException {
 
         // create generation
-        ScoreCalculator scoreCalculator = new ScoreCalculator(configuration.getDistanceMatrix());
+        ScoreCalculator scoreCalculator = new ScoreCalculator(configuration.getDistanceMatrix(), algorithmSetting);
 
         // main algorithm starts here
         List<Chromosome> population = scoreCalculator.createInitialPopulation();
 
         // generate new chromosomes
-        int MAX_ITERATIONS = configuration.getMaxIterations();
+        int MAX_ITERATIONS = algorithmSetting.getMaxIterations();
         for (int i = 0; i < MAX_ITERATIONS; i++) {
             population = scoreCalculator.nextGeneration(population);
         }
@@ -44,7 +47,6 @@ public class Solver {
         List<Object> destinationList = new ArrayList<>(tspDestinationList);
         List<Object> orderedList = new ArrayList<>();
 
-        // TODO : convert population to solution type
         for (int order = 0; order < bestSolution.getGenotype().size(); order++) {
             orderedList.add(destinationList.get(bestSolution.getGenotype().get(order)));
         }

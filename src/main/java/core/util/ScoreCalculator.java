@@ -1,5 +1,7 @@
 package core.util;
 
+import core.configurations.AlgorithmSetting;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -7,18 +9,19 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+// TODO : THIS CLASS IS JUST A WORKING VERSION, DESIGN OF ALGORITHM MUST BE CHANGED
 public class ScoreCalculator {
     // TODO : add crossover
-    // TODO : manipulate with mutation rate
     // TODO : add constraints
     // TODO : salesperson ?
 
-
-    private final int POPULATION_SIZE = 10;
+    private final int POPULATION_SIZE = 100;
     private final List<List<Double>> distanceMatrix;
+    private final AlgorithmSetting algorithmSetting;
 
-    public ScoreCalculator(List<List<Double>> distanceMatrix) {
+    public ScoreCalculator(List<List<Double>> distanceMatrix, AlgorithmSetting algorithmSetting) {
         this.distanceMatrix = distanceMatrix;
+        this.algorithmSetting = algorithmSetting;
     }
 
     public List<Chromosome> createInitialPopulation() {
@@ -79,7 +82,7 @@ public class ScoreCalculator {
 
         for (int i = 0; i < POPULATION_SIZE; i++) {
             Chromosome chromosome = new Chromosome(pickOneChromosome(population));
-            mutate(chromosome.getGenotype());
+            mutate(chromosome.getGenotype(), algorithmSetting.getMutationRate());
             fitness = calculateFitness(chromosome.getGenotype());
             chromosome.setFitness(fitness);
             nextGeneration.add(chromosome);
@@ -89,12 +92,14 @@ public class ScoreCalculator {
         return nextGeneration;
     }
 
-    private void mutate(List<Integer> chromosomeValue) {
-        Random randGenerator = new Random();
-        int index1 = randGenerator.nextInt(chromosomeValue.size());
-        int index2 = randGenerator.nextInt(chromosomeValue.size());
+    private void mutate(List<Integer> chromosomeValue, int mutationRate) {
+        for (int i = 0; i < mutationRate; i++) {
+            Random randGenerator = new Random();
+            int index1 = randGenerator.nextInt(chromosomeValue.size());
+            int index2 = randGenerator.nextInt(chromosomeValue.size());
 
-        swap(chromosomeValue, index1, index2);
+            swap(chromosomeValue, index1, index2);
+        }
     }
 
     public void swap(List<Integer> arr, int index1, int index2) {
@@ -121,6 +126,7 @@ public class ScoreCalculator {
                 best = ch;
             }
         }
+
         return best;
     }
 

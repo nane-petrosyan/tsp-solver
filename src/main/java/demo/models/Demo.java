@@ -1,5 +1,6 @@
 package demo.models;
 
+import core.configurations.AlgorithmSetting;
 import core.configurations.Solver;
 import core.configurations.TSPConfiguration;
 
@@ -38,12 +39,13 @@ public class Demo {
         // create a configuration
         TSPConfiguration tspConfiguration = new TSPConfiguration.Builder()
                 .setTsp(tsp)
-                .setMaxIterations(150)
                 .setDistanceMatrix(distanceMatrix)
                 .setSolutionClass(Solution.class)
                 .build();
 
-        Solver solver = new Solver(tspConfiguration);
+        AlgorithmSetting algorithmSetting = new AlgorithmSetting.Builder().setMaxIterations(2000).build();
+
+        Solver solver = new Solver(tspConfiguration, algorithmSetting);
         Solution solution = solver.solve();
 
         List<Destination> orderedDestinations = solution.destinations;
