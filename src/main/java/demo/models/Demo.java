@@ -1,7 +1,7 @@
 package demo.models;
 
-import core.configurations.AlgorithmSetting;
-import core.configurations.Solver;
+import core.util.AlgorithmSetting;
+import core.util.Solver;
 import core.configurations.TSPConfiguration;
 
 import java.util.ArrayList;
@@ -43,9 +43,9 @@ public class Demo {
                 .setSolutionClass(Solution.class)
                 .build();
 
-        AlgorithmSetting algorithmSetting = new AlgorithmSetting.Builder().setMaxIterations(2000).build();
+        AlgorithmSetting algorithmSetting = new AlgorithmSetting.Builder().setMaxIterations(4000).build();
 
-        Solver solver = new Solver(tspConfiguration, algorithmSetting);
+        Solver solver = new Solver.Builder().setAlgorithmSettings(algorithmSetting).setConfiguration(tspConfiguration).build();
         Solution solution = solver.solve();
 
         List<Destination> orderedDestinations = solution.destinations;

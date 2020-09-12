@@ -1,8 +1,7 @@
-package core.configurations;
+package core.util;
 
 import core.annotations.Destinations;
-import core.util.Chromosome;
-import core.util.ScoreCalculator;
+import core.configurations.TSPConfiguration;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -17,29 +16,52 @@ public class Solver {
     private Solver() {
     }
 
-    // TODO : make this a builder
-    public Solver(TSPConfiguration configuration, AlgorithmSetting algorithmSetting) {
-        this.configuration = configuration;
-        this.algorithmSetting = algorithmSetting;
+    public Solver(Builder builder) {
+        this.configuration = builder.configuration;
+        this.algorithmSetting = builder.algorithmSetting;
         this.solutionType = configuration.getSolutionClass();
     }
 
+    public static class Builder {
+        private TSPConfiguration configuration;
+        private AlgorithmSetting algorithmSetting = new AlgorithmSetting.Builder().build();
+
+        public Builder setConfiguration(TSPConfiguration configuration) {
+            this.configuration = configuration;
+
+            return this;
+        }
+
+        public Builder setAlgorithmSettings(AlgorithmSetting algorithmSettings) {
+            this.algorithmSetting = algorithmSettings;
+
+            return this;
+        }
+
+        public Solver build() {
+            if (configuration == null) {
+                throw new IllegalStateException("Please provide a configuration for TSP");
+            }
+
+            return new Solver(this);
+        }
+    }
+
+    public TSPConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    public AlgorithmSetting getAlgorithmSetting() {
+        return algorithmSetting;
+    }
 
     // TODO : needs proper implementation
     public <solutionType> solutionType solve() throws IllegalAccessException, InstantiationException {
+        algorithmSetting.setCalculationCriterion(configuration.getDistanceMatrix());
 
-        // create generation
-        ScoreCalculator scoreCalculator = new ScoreCalculator(configuration.getDistanceMatrix(), algorithmSetting);
-
-        // main algorithm starts here
-        List<Chromosome> population = scoreCalculator.createInitialPopulation();
-
-        // generate new chromosomes
-        int MAX_ITERATIONS = algorithmSetting.getMaxIterations();
-        for (int i = 0; i < MAX_ITERATIONS; i++) {
-            population = scoreCalculator.nextGeneration(population);
-        }
-        Chromosome bestSolution = scoreCalculator.bestInThePopulation(population);
+        Generator generator = new Generator(algorithmSetting);
+        List<Chromosome> lastPopulation = generator.evolve();
+        Chromosome bestSolution = generator.bestInPopulation(lastPopulation);
 
         Field tspDestinationsField = getDestinationsField(configuration.getTsp());
         Collection<?> tspDestinationList = (Collection<?>) tspDestinationsField.get(configuration.getTsp());
@@ -57,16 +79,6 @@ public class Solver {
         collectionField.set(solution, orderedList);
 
         return solution;
-    }
-
-
-    public TSPConfiguration getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(TSPConfiguration configuration) {
-        this.configuration = configuration;
-        this.solutionType = configuration.getSolutionClass();
     }
 
     private Field getDestinationsField(Object tsp) throws IllegalAccessException {

@@ -42,6 +42,18 @@ public class TSPConfiguration {
         }
 
         public TSPConfiguration build() {
+            if (solutionClass == null) {
+                throw new IllegalStateException("You need to specify solution class for TSP.");
+            }
+
+            if (tsp == null) {
+                throw new IllegalStateException("You need to specify TSP.");
+            }
+
+            if (distanceMatrix == null) {
+                throw new IllegalStateException("You need to specify distance matrix for destinations.");
+            }
+
             return new TSPConfiguration(this);
         }
     }
