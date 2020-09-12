@@ -11,7 +11,6 @@ import java.util.stream.IntStream;
 
 // TODO : THIS CLASS IS JUST A WORKING VERSION, DESIGN OF ALGORITHM MUST BE CHANGED
 public class ScoreCalculator {
-    // TODO : add crossover
     // TODO : add constraints
     // TODO : salesperson ?
 
@@ -42,15 +41,33 @@ public class ScoreCalculator {
         return initialPopulation;
     }
 
+//    private void normalizeFitness(List<Chromosome> population) {
+//        float fitnessSum = 0;
+//        for (Chromosome chromosome : population) {
+//            fitnessSum += chromosome.getFitness();
+//        }
+//
+//        for (Chromosome chromosome : population) {
+//            chromosome.setFitness(chromosome.getFitness() / fitnessSum);
+//        }
+//    }
+
     private void normalizeFitness(List<Chromosome> population) {
-        float fitnessSum = 0;
+        float maxFitness = population.get(0).getFitness();
+        float minFitness = population.get(0).getFitness();
         for (Chromosome chromosome : population) {
-            fitnessSum += chromosome.getFitness();
+            if (chromosome.getFitness() > maxFitness) {
+                maxFitness = chromosome.getFitness();
+            }
+            if (chromosome.getFitness() < minFitness) {
+                minFitness = chromosome.getFitness();
+            }
         }
 
         for (Chromosome chromosome : population) {
-            chromosome.setFitness(chromosome.getFitness() / fitnessSum);
+            chromosome.setFitness((chromosome.getFitness() - minFitness) / (maxFitness - minFitness));
         }
+
     }
 
     private float calculateFitness(List<Integer> order) {
@@ -81,15 +98,41 @@ public class ScoreCalculator {
         float fitness;
 
         for (int i = 0; i < POPULATION_SIZE; i++) {
-            Chromosome chromosome = new Chromosome(pickOneChromosome(population));
-            mutate(chromosome.getGenotype(), algorithmSetting.getMutationRate());
-            fitness = calculateFitness(chromosome.getGenotype());
-            chromosome.setFitness(fitness);
-            nextGeneration.add(chromosome);
+//            System.out.println("iteration " + i);
+            Chromosome chromosomeA = pickOneChromosome(population);
+            Chromosome chromosomeB = pickOneChromosome(population);
+
+            Chromosome child = crossover(chromosomeA, chromosomeB);
+            mutate(child.getGenotype(), algorithmSetting.getMutationRate());
+            fitness = calculateFitness(child.getGenotype());
+            child.setFitness(fitness);
+            nextGeneration.add(child);
         }
         normalizeFitness(nextGeneration);
 
         return nextGeneration;
+    }
+
+    private Chromosome crossover(Chromosome geneA, Chromosome geneB) {
+
+        List<Integer> genotypeA = geneA.getGenotype();
+        List<Integer> genotypeB = geneB.getGenotype();
+
+        Random random = new Random();
+        int indexA = random.nextInt(1) + (genotypeA.size());
+        int indexB = random.nextInt((genotypeA.size() - indexA) + 1) + indexA;
+
+        List<Integer> slicedOrder = genotypeA.subList(indexA, indexB);
+
+        List<Integer> child = new ArrayList<>(slicedOrder);
+
+        for (Integer order : genotypeB) {
+            if (!child.contains(order)) {
+                child.add(order);
+            }
+        }
+
+        return new Chromosome(calculateFitness(child), child);
     }
 
     private void mutate(List<Integer> chromosomeValue, int mutationRate) {
@@ -110,7 +153,7 @@ public class ScoreCalculator {
 
     private Chromosome pickOneChromosome(List<Chromosome> population) {
         int index = 0;
-        float random = new Random().nextFloat();
+        float random = new Random().nextFloat() + 0.01f;
 
         while (random > 0) {
             random -= population.get(index++).getFitness();
