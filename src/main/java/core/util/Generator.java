@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Generator {
+    // TODO : add penalty strategies, time criteria
     private final int POPULATION_SIZE;
     private final AlgorithmSetting algorithmSettings;
     private final Reproducer reproducer;

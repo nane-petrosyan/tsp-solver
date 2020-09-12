@@ -81,7 +81,7 @@ public class Solver {
         return solution;
     }
 
-    private Field getDestinationsField(Object tsp) throws IllegalAccessException {
+    private Field getDestinationsField(Object tsp) {
 
         Field destinations = null;
         int destinationAnnotationQuantity = 0;
@@ -97,7 +97,6 @@ public class Solver {
                     throw new IllegalStateException("Destinations of TSP must represent a collection.");
                 }
 
-                // TODO : catch here
                 destinations = field;
 
                 if (destinationAnnotationQuantity > 0) {
