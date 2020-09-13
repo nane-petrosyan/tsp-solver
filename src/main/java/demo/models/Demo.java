@@ -12,11 +12,11 @@ public class Demo {
     public static void main(String[] args) throws InstantiationException, IllegalAccessException {
         // create a list of destinations
         List<Destination> destinations = new ArrayList<>();
-        destinations.add(new Destination("Yerevan"));
-        destinations.add(new Destination("Rotterdam"));
-        destinations.add(new Destination("Prague"));
-        destinations.add(new Destination("Berlin"));
-        destinations.add(new Destination("Tokyo"));
+        destinations.add(new Destination("Yerevan", Arrays.asList(200.0,400.0)));
+        destinations.add(new Destination("Rotterdam",Arrays.asList(200.0,400.0)));
+        destinations.add(new Destination("Prague",Arrays.asList(200.0,400.0)));
+        destinations.add(new Destination("Berlin",Arrays.asList(200.0,400.0)));
+        destinations.add(new Destination("Tokyo",Arrays.asList(200.0,400.0)));
 
         // create a TSP
         SampleTsp tsp = new SampleTsp(destinations);
@@ -30,16 +30,31 @@ public class Demo {
                 {7922.0, 9343.0, 9064.0, 8915.0, 0.0}
         };
 
+        Double[][] durationArrayMatrix = new Double[][]{
+                {0.0, 447.5, 359.3, 346.8, 793.0},
+                {447.8, 0.0, 90.8, 69.5, 933.0},
+                {359.0, 90.7, 0.0, 349.1, 906.0},
+                {394.0, 69.6, 34.6, 0.0, 891.0},
+                {792.0, 934.0, 906.0, 891.0, 0.0}
+        };
+
         List<List<Double>> distanceMatrix = new ArrayList<>();
+        List<List<Double>> durationMatrix = new ArrayList<>();
 
         for (Double[] arrayMatrix : distanceArrayMatrix) {
             distanceMatrix.add(Arrays.asList(arrayMatrix));
         }
 
+        for (Double[] arrayMatrix : durationArrayMatrix) {
+            durationMatrix.add(Arrays.asList(arrayMatrix));
+        }
+
+
         // create a configuration
         TSPConfiguration tspConfiguration = new TSPConfiguration.Builder()
                 .setTsp(tsp)
                 .setDistanceMatrix(distanceMatrix)
+                .setDurationMatrix(durationMatrix)
                 .setSolutionClass(Solution.class)
                 .build();
 

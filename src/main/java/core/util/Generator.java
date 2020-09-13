@@ -11,12 +11,19 @@ public class Generator {
     private final AlgorithmSetting algorithmSettings;
     private final Reproducer reproducer;
     private final FitnessCalculator fitnessCalculator;
+    private List<Penalizer> penalizers = new ArrayList<>();
 
     protected Generator(AlgorithmSetting algorithmSettings) {
         this.POPULATION_SIZE = algorithmSettings.getPopulationSize();
         this.algorithmSettings = algorithmSettings;
         this.reproducer = new Reproducer.Builder().setMutationRate(algorithmSettings.getMutationRate()).build();
         this.fitnessCalculator = new FitnessCalculator(algorithmSettings.getCalculationCriterion());
+    }
+
+    protected void addPenalizer(Penalizer penalizer) {
+        if (penalizer != null) {
+            penalizers.add(penalizer);
+        }
     }
 
     protected List<Chromosome> evolve() {
@@ -41,6 +48,11 @@ public class Generator {
             Chromosome child = new Chromosome(fitnessCalculator.calculate(childGene), childGene);
             reproducer.mutate(child.getGenotype());
             fitness = fitnessCalculator.calculate(child.getGenotype());
+
+            for (Penalizer penalizer : penalizers) {
+                penalizer.penalizeAll(child);
+            }
+
             child.setFitness(fitness);
             nextGeneration.add(child);
         }

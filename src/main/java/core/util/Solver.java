@@ -1,13 +1,14 @@
 package core.util;
 
+import core.annotations.ArrivalTime;
 import core.annotations.Destinations;
+import core.annotations.TimeWindow;
 import core.configurations.TSPConfiguration;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
+// TODO : create proper fitness normalizer
 public class Solver {
     private TSPConfiguration configuration;
     private AlgorithmSetting algorithmSetting;
@@ -55,16 +56,23 @@ public class Solver {
         return algorithmSetting;
     }
 
-    // TODO : needs proper implementation
+    // TODO : needs proper implementation, remove unchecked casts, wrap exceptions etc.
     public <solutionType> solutionType solve() throws IllegalAccessException, InstantiationException {
         algorithmSetting.setCalculationCriterion(configuration.getDistanceMatrix());
 
-        Generator generator = new Generator(algorithmSetting);
-        List<Chromosome> lastPopulation = generator.evolve();
-        Chromosome bestSolution = generator.bestInPopulation(lastPopulation);
 
         Field tspDestinationsField = getDestinationsField(configuration.getTsp());
         Collection<?> tspDestinationList = (Collection<?>) tspDestinationsField.get(configuration.getTsp());
+        configureTimeWindows(tspDestinationList);
+
+
+        Generator generator = new Generator(algorithmSetting);
+        if (configuration.getDurationMatrix() != null) {
+            generator.addPenalizer(new TimeWindowPenalizer(configuration.getDurationMatrix()));
+        }
+
+        List<Chromosome> lastPopulation = generator.evolve();
+        Chromosome bestSolution = generator.bestInPopulation(lastPopulation);
 
         List<Object> destinationList = new ArrayList<>(tspDestinationList);
         List<Object> orderedList = new ArrayList<>();
@@ -76,9 +84,25 @@ public class Solver {
 
         solutionType solution = (solutionType) solutionType.newInstance();
         Field collectionField = getSolutionDestinations(solution);
+        setSolutionDestinationArrivalTimes(destinationList, bestSolution.getArrivalTimes());
         collectionField.set(solution, orderedList);
 
         return solution;
+    }
+
+    private void setSolutionDestinationArrivalTimes(List<Object> destinationList, List<Double> arrivalTimes) throws IllegalAccessException {
+        if(arrivalTimes != null && !arrivalTimes.isEmpty()) {
+            int index = 0;
+            for (Object destination : destinationList) {
+                for (Field field : destination.getClass().getFields()) {
+                    if (field.isAnnotationPresent(ArrivalTime.class)) {
+                        field.set( destination, arrivalTimes.get(index));
+                        break;
+                    }
+                }
+                index++;
+            }
+        }
     }
 
     private Field getDestinationsField(Object tsp) {
@@ -131,6 +155,33 @@ public class Solver {
         }
 
         return collectionField;
+    }
+
+    private void configureTimeWindows(Collection<?> tspDestination) throws IllegalAccessException {
+        Map<Integer, List<Double>> timeWindowMap = new HashMap<>();
+
+        if (tspDestination == null) {
+            throw new IllegalStateException("Please provide valid destination list.");
+        }
+
+        int index = 0;
+        for (Object dest : tspDestination) {
+            for (Field field : dest.getClass().getFields()) {
+                if (field.isAnnotationPresent(TimeWindow.class)) {
+
+                    if (!Collection.class.isAssignableFrom(field.getType())) {
+                        throw new IllegalStateException("Time windows of TSP must represent a collection.");
+                    }
+
+                    timeWindowMap.put(index, (List<Double>) field.get(dest));
+
+                    break;
+                }
+            }
+            index++;
+        }
+
+        Chromosome.setTimeWindows(timeWindowMap);
     }
 }
 
